@@ -1,0 +1,33 @@
+version: '3'
+services:
+  
+  # nginx proxies all http requests to the right service 
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./configs/.htpasswd:/etc/nginx/.htpasswd
+    ports:
+      - "8080:8080"
+
+  # frontend service
+  frontend:
+    image: vm014.qu.tu-berlin.de:6000/csd-frontend-arm64
+    volumes:
+      - ./configs/frontend-assets/:/app/user-assets/
+
+  # the python backend of the climate change denier bot
+  example-bot-backend:
+    image: vm014.qu.tu-berlin.de:6000/example-bot-python-backend-arm64
+    container_name: climate-change-denier-python-backend
+    environment:
+      - RASA_NLU_URL=http://climate-change-denier-nlu:5005/model/parse
+      - PRODUCTION=1
+    volumes:
+      - ./logs/example-bot/:/app/logs
+
+  # the rasa nlu server of the climate change denier bot
+  example-bot-nlu:
+    image: vm014.qu.tu-berlin.de:6000/example-bot-rasa-nlu-arm64
+    container_name: climate-change-denier-nlu
